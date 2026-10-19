@@ -1,14 +1,20 @@
-name: Compilar APK Android
+name: Cancha v2 · pruebas y APK
 on:
   push:
-    branches: [main, master]
+    branches: [v.2]
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: cancha-v2-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: marcador_deportivo_bluetooth_flutter
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -19,24 +25,26 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Preparar proyecto Android completo
-        shell: bash
+      - name: Preparar Android
+        run: bash tool/bootstrap.sh --prepare
+      - name: Formatear y analizar
         run: |
-          set -euo pipefail
-          flutter create --empty --platforms=android --org cl.marcador --project-name marcador_deportivo_bt "$RUNNER_TEMP/marcador_build"
-          cp marcador_deportivo_bluetooth_flutter/pubspec.yaml "$RUNNER_TEMP/marcador_build/pubspec.yaml"
-          rm -rf "$RUNNER_TEMP/marcador_build/lib"
-          cp -R marcador_deportivo_bluetooth_flutter/lib "$RUNNER_TEMP/marcador_build/lib"
-          cp marcador_deportivo_bluetooth_flutter/android/app/src/main/AndroidManifest.xml "$RUNNER_TEMP/marcador_build/android/app/src/main/AndroidManifest.xml"
-      - name: Descargar dependencias
-        run: cd "$RUNNER_TEMP/marcador_build" && flutter pub get
-      - name: Analizar código
-        run: cd "$RUNNER_TEMP/marcador_build" && flutter analyze --no-fatal-infos
-      - name: Compilar APK instalable de pruebas
-        run: cd "$RUNNER_TEMP/marcador_build" && flutter build apk --release
-      - name: Publicar APK
+          dart format lib test
+          flutter analyze
+      - name: Pruebas de reglas, control y pantallas
+        run: flutter test --reporter expanded
+      - name: Generar APK instalable
+        run: flutter build apk --release
+      - name: Guardar APK v2
         uses: actions/upload-artifact@v4
         with:
-          name: Marcador-Android-APK
-          path: ${{ runner.temp }}/marcador_build/build/app/outputs/flutter-apk/app-release.apk
+          name: Cancha-v2-Android
+          path: marcador_deportivo_bluetooth_flutter/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+      - name: Guardar vistas de prueba
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cancha-v2-vistas
+          path: marcador_deportivo_bluetooth_flutter/build/previews/*.png
+          if-no-files-found: ignore
