@@ -162,7 +162,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             decoration:const InputDecoration(labelText:'Primer receptor'),
             items:[for(var i=0;i<4;i++) if(i%2!=first%2) DropdownMenuItem(value:i,child:Text('Jugador ${i+1}'))],
             onChanged:(v)=>update(()=>receiver=v!)),
-          if(sport!=Sport.tableTennis) SwitchListTile(title:const Text(sport==Sport.padel?'Punto de oro':'Sin ventajas (No-Ad)'),
+          if(sport!=Sport.tableTennis) SwitchListTile(title:Text(sport==Sport.padel?'Punto de oro':'Sin ventajas (No-Ad)'),
             value:golden,onChanged:(v)=>update(()=>golden=v)),
           const Text('Tenis/pádel: sets a 6, diferencia de 2 y tie-break a 7 en 6–6. '
             'Ping-pong: juegos a 11, diferencia de 2. Orden de dobles: J1 → J2 → J3 → J4. '
