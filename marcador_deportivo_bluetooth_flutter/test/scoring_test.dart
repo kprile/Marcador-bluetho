@@ -35,7 +35,7 @@ void main() {
     s.add(0);expect(s.winner,null);expect(s.server,1);s.add(0);expect(s.sets,[1,0]);expect(s.server,1);
   });
   test('undo reconstruye un set y su saque', () {
-    final c=const MatchConfig(bestOf:1);final ledger=List.filled(24,0);
+    final c=const MatchConfig(bestOf:1);final ledger=List.filled(24,0,growable:true);
     expect(Score.replay(c,ledger).winner,0);ledger.removeLast();
     final s=Score.replay(c,ledger);expect(s.winner,null);expect(s.games,[5,0]);expect(s.points,[3,0]);expect(s.server,1);
   });
@@ -74,7 +74,7 @@ void main() {
     s.add(1);expect(s.changeEnds,false);
   });
   test('deshacer final vuelve a punto de partido y conserva tanteo', () {
-    const c=MatchConfig(bestOf:1);final ledger=List.filled(24,1);
+    const c=MatchConfig(bestOf:1);final ledger=List.filled(24,1,growable:true);
     expect(Score.replay(c,ledger).winner,1);
     ledger.removeLast();final s=Score.replay(c,ledger);
     expect(s.pointLabel(1),'40');expect(s.pressure,contains('partido'));

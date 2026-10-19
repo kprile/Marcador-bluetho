@@ -14,7 +14,7 @@ class App extends StatelessWidget {
   const App({super.key});
   @override Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false, title: 'Cancha · v2',
-    theme: ThemeData(brightness: Brightness.dark, useMaterial3: true,
+    theme: ThemeData(fontFamily:'PlusJakartaSans',brightness: Brightness.dark, useMaterial3: true,
       colorSchemeSeed: const Color(0xffe2f952), scaffoldBackgroundColor: const Color(0xff0b0f17),
       dialogTheme:const DialogThemeData(backgroundColor:Color(0xff0f172a)),
       inputDecorationTheme:const InputDecorationTheme(filled:true,fillColor:Color(0xff020617),border:OutlineInputBorder())),
@@ -343,10 +343,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     child:Row(children:[
       OutlinedButton.icon(onPressed:ledger.isEmpty?null:undo,icon:const Icon(Icons.undo,size:17),label:const Text('Deshacer'),
         style:OutlinedButton.styleFrom(foregroundColor:const Color(0xfffcd34d),side:const BorderSide(color:Color(0xff78550d)))),
-      if(!compact) Padding(padding:const EdgeInsets.only(left:16),child:Text(remote?'● CONTROL ACTIVO · 1 clic = J1 · 2 clics = J2 · 3 = deshacer':'○ MODO TÁCTIL · activa el control en Diagnóstico BT',
-        style:const TextStyle(fontSize:11,color:muted))),
-      const Spacer(),
-      TextButton(onPressed:diagnostics,child:const Text('Probar Control',style:TextStyle(color:muted,fontSize:12))),
+      if(!compact) Expanded(child:Padding(padding:const EdgeInsets.only(left:16),child:Text(remote?'● CONTROL ACTIVO · 1 clic = J1 · 2 clics = J2 · 3 = deshacer':'○ MODO TÁCTIL · activa el control en Diagnóstico BT',
+        maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11,color:muted)))),
+      if(compact) const Spacer(),
+      TextButton(onPressed:diagnostics,child:Text(compact?'Probar BT':'Probar Control',style:const TextStyle(color:muted,fontSize:12))),
     ]));
   @override Widget build(BuildContext context) {
     final s=score;

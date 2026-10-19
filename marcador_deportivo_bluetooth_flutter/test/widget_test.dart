@@ -8,6 +8,11 @@ import 'package:marcador_bluetooth/main.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    final numbers=FontLoader('BarlowCondensed')..addFont(rootBundle.load('assets/fonts/BarlowCondensed-Black.ttf'));
+    final body=FontLoader('PlusJakartaSans')..addFont(rootBundle.load('assets/fonts/PlusJakartaSans.ttf'));
+    await numbers.load();await body.load();
+  });
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(native,(call) async {
       if(call.method=='read') return '';
