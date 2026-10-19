@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:marcador_bluetooth/scoring.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -14,9 +16,14 @@ void main() {
     final icons=FontLoader('MaterialIcons')..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
     await numbers.load();await body.load();await icons.load();
   });
+  String stored="";
+  final spoken=<Map<dynamic,dynamic>>[];
   setUp(() {
+    stored="";spoken.clear();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(native,(call) async {
-      if(call.method=='read') return '';
+      if(call.method=='read') return stored;
+      if(call.method=='write') stored=call.arguments as String;
+      if(call.method=='speak') spoken.add(Map<dynamic,dynamic>.from(call.arguments));
       if(call.method=='voices') return <dynamic>[{'name':'Voz de prueba offline','locale':'es-CL'}];
       return null;
     });
@@ -64,4 +71,19 @@ void main() {
     expect(find.text('Voz y control'),findsOneWidget);expect(tester.takeException(),isNull);
     await tester.pumpWidget(const SizedBox.shrink());await tester.pumpAndSettle();
   });
+  testWidgets('la voz manual guardada no cambia al cargar otras voces',(tester) async {
+    stored=jsonEncode({'version':2,'config':const MatchConfig().toJson(),'ledger':[],
+      'history':[],'key':24,'window':420,'rate':1.0,'voice':true,
+      'selectedVoice':'Mi voz elegida','device':null,'startedAt':'2026-10-19T17:00:00Z'});
+    await render(tester,const Size(390,844));
+    await tester.tap(find.byTooltip('Menú de opciones'));await tester.pumpAndSettle();
+    await tester.tap(find.text('Repetir marcador'));await tester.pumpAndSettle();
+    expect(spoken.last['voice'],'Mi voz elegida');
+    await tester.tap(find.byTooltip('Menú de opciones'));await tester.pumpAndSettle();
+    await tester.tap(find.text('Voz y parlante'));await tester.pumpAndSettle();
+    expect(find.text('La voz guardada no está disponible. Selecciona otra o Automática.'),findsOneWidget);
+    expect(tester.takeException(),isNull);
+    await tester.pumpWidget(const SizedBox.shrink());await tester.pumpAndSettle();
+  });
+
 }
