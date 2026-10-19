@@ -11,7 +11,8 @@ void main() {
   setUpAll(() async {
     final numbers=FontLoader('BarlowCondensed')..addFont(rootBundle.load('assets/fonts/BarlowCondensed-Black.ttf'));
     final body=FontLoader('PlusJakartaSans')..addFont(rootBundle.load('assets/fonts/PlusJakartaSans.ttf'));
-    await numbers.load();await body.load();
+    final icons=FontLoader('MaterialIcons')..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+    await numbers.load();await body.load();await icons.load();
   });
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(native,(call) async {

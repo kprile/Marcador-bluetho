@@ -263,7 +263,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   }
   Widget header(bool compact) => Container(
     decoration:const BoxDecoration(border:Border(bottom:BorderSide(color:Color(0xff1e293b)))),
-    padding:const EdgeInsets.symmetric(horizontal:14),height:52,
+    padding:const EdgeInsets.symmetric(horizontal:14),height:44,
     child:Row(children:[
       const Text.rich(TextSpan(children:[TextSpan(text:'SCORE',style:TextStyle(color:yellow)),TextSpan(text:'BT')]),
         style:TextStyle(fontSize:20,fontWeight:FontWeight.w900,letterSpacing:-1)),
@@ -276,7 +276,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       ]))),
       const SizedBox(width:8),
       FilledButton(style:FilledButton.styleFrom(backgroundColor:yellow,foregroundColor:const Color(0xff020617),
-        padding:const EdgeInsets.symmetric(horizontal:12),minimumSize:const Size(0,36)),
+        padding:const EdgeInsets.symmetric(horizontal:12),minimumSize:const Size(0,32)),
         onPressed:ready?setup:null,child:Text(compact?'Nuevo':'Nuevo Partido',style:const TextStyle(fontWeight:FontWeight.w800))),
     ]));
   Widget nav(String label,IconData icon,VoidCallback action,bool compact,{bool selected=false}) => compact
@@ -297,8 +297,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
           child:Padding(padding:EdgeInsets.all(low?10:18),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
             Text('EQUIPO ${i+1} · ${i==0?"1 CLIC":"2 CLICS"}',style:const TextStyle(color:muted,fontSize:10,letterSpacing:1)),
             Text(config.team(i),maxLines:1,overflow:TextOverflow.ellipsis,
-              style:TextStyle(fontSize:low?17:22,fontWeight:FontWeight.w900)),
-            SizedBox(height:low?24:30,child:serving?Align(alignment:Alignment.centerLeft,child:Container(
+              style:TextStyle(fontSize:low?15:22,fontWeight:FontWeight.w900)),
+            SizedBox(height:low?18:30,child:serving?Align(alignment:Alignment.centerLeft,child:Container(
               padding:const EdgeInsets.symmetric(horizontal:8,vertical:3),decoration:BoxDecoration(
                 color:const Color(0xff064e3b),borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xff047857))),
               child:Text('● SAQUE${s.table?"":" · ${s.total.isEven?"DER.":"IZQ."}"}',
@@ -308,14 +308,20 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 style:TextStyle(fontSize:190,height:1,fontWeight:FontWeight.w900,fontFamily:'BarlowCondensed',
                   letterSpacing:-6,color:color,shadows:[Shadow(color:color.withValues(alpha:0.23),blurRadius:25)])))))),
             Center(child:Text(s.table||s.tie?'PUNTOS':'TANTEO',style:const TextStyle(color:muted,fontSize:10,letterSpacing:2))),
-            const SizedBox(height:8),const Divider(color:Color(0xff1e293b),height:1),
+            SizedBox(height:low?2:8),const Divider(color:Color(0xff1e293b),height:1),
             Padding(padding:const EdgeInsets.only(top:6),child:Row(children:[
-              miniMetric(s.table?'PUNTOS DEL JUEGO':'JUEGOS',s.table?s.points[i]:s.games[i]),
-              miniMetric(s.table?'JUEGOS GANADOS':'SETS',s.sets[i],color:const Color(0xfffbbf24)),
+              if(low) ...[
+                Expanded(child:Text('${s.table?"PUNTOS":"JUEGOS"}  ${s.table?s.points[i]:s.games[i]}',textAlign:TextAlign.center,style:const TextStyle(fontSize:13,fontWeight:FontWeight.bold))),
+                Expanded(child:Text('${s.table?"GANADOS":"SETS"}  ${s.sets[i]}',textAlign:TextAlign.center,style:const TextStyle(fontSize:13,fontWeight:FontWeight.bold,color:Color(0xfffbbf24)))),
+              ] else ...[
+                miniMetric(s.table?'PUNTOS DEL JUEGO':'JUEGOS',s.table?s.points[i]:s.games[i]),
+                miniMetric(s.table?'JUEGOS GANADOS':'SETS',s.sets[i],color:const Color(0xfffbbf24)),
+              ],
             ])),
           ])))))));
   }
-  Widget toolbar(Score s,bool compact) => Container(color:const Color(0xff020617),
+  Widget toolbar(Score s,bool compact) => IconButtonTheme(data:IconButtonThemeData(style:IconButton.styleFrom(
+    minimumSize:const Size(32,32),padding:const EdgeInsets.all(5),tapTargetSize:MaterialTapTargetSize.shrinkWrap)),child:Container(color:const Color(0xff020617),
     padding:const EdgeInsets.symmetric(horizontal:12,vertical:3),child:Row(children:[
       Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisSize:MainAxisSize.min,children:[
         Text('${config.label.toUpperCase()} · ${s.table?"A 11 PUNTOS":config.goldenPoint?"PUNTO DE ORO":"VENTAJAS"}',
@@ -330,23 +336,23 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
       IconButton(tooltip:voice?'Silenciar voz':'Activar voz',onPressed:(){setState(()=>voice=!voice);save();if(!voice)call('stop');},
         icon:Icon(voice?Icons.volume_up:Icons.volume_off,size:19,color:voice?const Color(0xff34d399):muted)),
       IconButton(tooltip:'Pantalla completa',onPressed:toggleFullscreen,icon:Icon(fullscreen?Icons.fullscreen_exit:Icons.fullscreen,size:20)),
-    ]));
+    ])));
   Widget status(Score s) {
     final text=s.winner!=null?'🏆 GANADOR · ${config.team(s.winner!)}':
       s.pressure.isNotEmpty?s.pressure:s.changeEnds?'Cambio de lado':
       'Saca ${config.players[s.server]}${s.table?" · Recibe ${config.players[s.receiver!]}":""}';
-    return Container(width:double.infinity,color:const Color(0xff0f172a),padding:const EdgeInsets.symmetric(horizontal:12,vertical:5),
+    return Container(width:double.infinity,color:const Color(0xff0f172a),padding:const EdgeInsets.symmetric(horizontal:12,vertical:3),
       child:Text(text,maxLines:2,overflow:TextOverflow.ellipsis,textAlign:TextAlign.center,
         style:TextStyle(color:s.winner!=null?yellow:muted,fontSize:12,fontWeight:FontWeight.w600)));
   }
   Widget dock(bool compact) => Container(color:const Color(0xff020617),padding:const EdgeInsets.symmetric(horizontal:12,vertical:4),
     child:Row(children:[
       OutlinedButton.icon(onPressed:ledger.isEmpty?null:undo,icon:const Icon(Icons.undo,size:17),label:const Text('Deshacer'),
-        style:OutlinedButton.styleFrom(foregroundColor:const Color(0xfffcd34d),side:const BorderSide(color:Color(0xff78550d)))),
+        style:OutlinedButton.styleFrom(minimumSize:const Size(0,32),tapTargetSize:MaterialTapTargetSize.shrinkWrap,padding:const EdgeInsets.symmetric(horizontal:12),foregroundColor:const Color(0xfffcd34d),side:const BorderSide(color:Color(0xff78550d)))),
       if(!compact) Expanded(child:Padding(padding:const EdgeInsets.only(left:16),child:Text(remote?'● CONTROL ACTIVO · 1 clic = J1 · 2 clics = J2 · 3 = deshacer':'○ MODO TÁCTIL · activa el control en Diagnóstico BT',
         maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11,color:muted)))),
       if(compact) const Spacer(),
-      TextButton(onPressed:diagnostics,child:Text(compact?'Probar BT':'Probar Control',style:const TextStyle(color:muted,fontSize:12))),
+      TextButton(style:TextButton.styleFrom(minimumSize:const Size(0,32),tapTargetSize:MaterialTapTargetSize.shrinkWrap),onPressed:diagnostics,child:Text(compact?'Probar BT':'Probar Control',style:const TextStyle(color:muted,fontSize:12))),
     ]));
   @override Widget build(BuildContext context) {
     final s=score;
