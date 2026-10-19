@@ -1,4 +1,4 @@
-package cl.marcador.bluetooth
+package cl.marcador.bluetooth.v3
 
 import android.os.Bundle
 import android.content.Intent
@@ -72,8 +72,13 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
                         if (!ttsReady) { result.error("TTS", "Motor de voz no disponible", null); return@setMethodCallHandler }
                         val args = call.arguments as Map<*, *>
                         val offline = tts?.voices?.filter { !it.isNetworkConnectionRequired && it.locale.language == "es" && !it.features.contains("notInstalled") } ?: emptyList()
-                        val voice = offline.firstOrNull { it.name == args["voice"] }
-                            ?: offline.firstOrNull { it.locale.country == "CL" } ?: offline.firstOrNull()
+                        val selectedName = args["voice"] as? String
+                        if (selectedName != null && offline.none { it.name == selectedName }) {
+                            result.error("VOICE_UNAVAILABLE", "La voz elegida ya no está disponible. Elige otra voz offline o Automática.", null)
+                            return@setMethodCallHandler
+                        }
+                        val voice = if (selectedName != null) offline.first { it.name == selectedName }
+                            else offline.firstOrNull { it.locale.country == "CL" } ?: offline.firstOrNull()
                         if (voice == null) { result.error("VOICE", "Instala una voz española sin conexión en Android", null); return@setMethodCallHandler }
                         tts?.voice = voice
                         tts?.setSpeechRate((args["rate"] as? Number)?.toFloat() ?: 1f)

@@ -1,12 +1,12 @@
-name: Cancha v2 · pruebas y APK
+name: Cancha v3 · pruebas y APK
 on:
   push:
-    branches: [v.2]
+    branches: [v.3]
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: cancha-v2-${{ github.ref }}
+  group: cancha-v3-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build:
@@ -21,7 +21,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v3
         with:
           channel: stable
           cache: true
@@ -35,16 +35,16 @@ jobs:
         run: flutter test --reporter expanded
       - name: Generar APK instalable
         run: flutter build apk --release
-      - name: Guardar APK v2
+      - name: Guardar APK v3
         uses: actions/upload-artifact@v4
         with:
-          name: Cancha-v2-Android
+          name: Cancha-v3-Android
           path: marcador_deportivo_bluetooth_flutter/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
       - name: Guardar vistas de prueba
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Cancha-v2-vistas
+          name: Cancha-v3-vistas
           path: marcador_deportivo_bluetooth_flutter/build/previews/*.png
           if-no-files-found: ignore

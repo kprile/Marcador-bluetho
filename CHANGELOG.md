@@ -1,5 +1,11 @@
 # Historial
 
+## 3.0.0 — 2026-10-19 — rama v.3
+
+Diseño minimalista de la nueva referencia de AI Studio: menú flotante y números
+más grandes. Respeta la selección manual de voz y mantiene voces offline.
+Identificador Android separado para conservar v2 instalada.
+
 ## 2.0.0 — 2026-10-19 — rama v.2
 
 Interfaz Flutter basada en SCOREBT de AI Studio, en vez de la exportación Dart

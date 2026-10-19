@@ -13,7 +13,7 @@ const keys = EventChannel('cl.marcador/keys');
 class App extends StatelessWidget {
   const App({super.key});
   @override Widget build(BuildContext context) => MaterialApp(
-    debugShowCheckedModeBanner: false, title: 'Cancha · v2',
+    debugShowCheckedModeBanner: false, title: 'SCOREBT · v3',
     theme: ThemeData(fontFamily:'PlusJakartaSans',brightness: Brightness.dark, useMaterial3: true,
       colorSchemeSeed: const Color(0xffe2f952), scaffoldBackgroundColor: const Color(0xff0b0f17),
       dialogTheme:const DialogThemeData(backgroundColor:Color(0xff0f172a)),
@@ -39,13 +39,14 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   late final RemoteClicks clicks;
   String? deviceDescriptor;
   bool overlay = false, foreground = true;
-  bool swapped = false, fullscreen = false;
+  bool swapped = false, fullscreen = true;
   StreamSubscription<dynamic>? subscription;
   String? error;
   Future<void> writes = Future.value();
   @override void initState() {
     super.initState(); WidgetsBinding.instance.addObserver(this);
-    clicks=RemoteClicks(onPoint:add,onUndo:undo); load();
+    clicks=RemoteClicks(onPoint:add,onUndo:undo);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky); load();
     subscription = keys.receiveBroadcastStream().listen(onKey, onError: (Object e) {
       if (mounted) setState(() => error = 'Diagnóstico no disponible: $e');
     });
@@ -190,13 +191,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
           Text('Voz y control',style:Theme.of(ctx).textTheme.headlineSmall),
           SwitchListTile(title:const Text('Anunciar marcador'),value:voice,onChanged:(v){setState(()=>voice=v);update((){});}),
-          DropdownButtonFormField<String>(initialValue:voices.any((v)=>v['name']==selectedVoice)?selectedVoice:null,
+          DropdownButtonFormField<String>(initialValue:voices.any((v)=>v['name']==selectedVoice)?selectedVoice:'',
+            hint:const Text('Automática · voz española offline'),
             decoration:const InputDecoration(labelText:'Voces españolas instaladas sin red'),
             isExpanded:true,
-            items:voices.map((v)=>DropdownMenuItem<String>(value:v['name'] as String,
-              child:Text('${v['name']}',overflow:TextOverflow.ellipsis))).toList(),
-            onChanged:(v){setState(()=>selectedVoice=v);update((){});}),
-          const Text('Si no hay voces, instala una voz española sin conexión desde los ajustes de Android.'),
+            items:[const DropdownMenuItem<String>(value:'',child:Text('Automática · offline')),
+              ...voices.map((v)=>DropdownMenuItem<String>(value:v['name'] as String,
+                child:Text('${v['name']}',overflow:TextOverflow.ellipsis)))],
+            onChanged:(v){setState(()=>selectedVoice=v==''?null:v);update((){});}),
+          if(selectedVoice!=null && !voices.any((v)=>v['name']==selectedVoice))
+            const Text('La voz guardada no está disponible. Selecciona otra o Automática.',style:TextStyle(color:Color(0xfffbbf24))),
+          const Text('Se respeta la voz elegida. Solo se muestran voces españolas instaladas sin conexión. '
+            'Yolanda Online no se descarga ni se incluye en este APK. Si no hay voces, instala una voz offline desde Android.'),
           Text('Velocidad: ${rate.toStringAsFixed(1)}'),
           Slider(value:rate,min:0.5,max:1.5,divisions:10,onChanged:(v){setState(()=>rate=v);update((){});}),
           OutlinedButton(onPressed:()=>speak('Prueba de voz. Quince, treinta. Cambio de saque.'),child:const Text('Probar voz')),
@@ -261,27 +267,6 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     cancelPending(); setState(()=>ledger.removeLast());save();
     speak('Punto corregido. ${score.summary} Saca ${config.players[score.server]}.');
   }
-  Widget header(bool compact) => Container(
-    decoration:const BoxDecoration(border:Border(bottom:BorderSide(color:Color(0xff1e293b)))),
-    padding:const EdgeInsets.symmetric(horizontal:14),height:44,
-    child:Row(children:[
-      const Text.rich(TextSpan(children:[TextSpan(text:'SCORE',style:TextStyle(color:yellow)),TextSpan(text:'BT')]),
-        style:TextStyle(fontSize:20,fontWeight:FontWeight.w900,letterSpacing:-1)),
-      const SizedBox(width:12),
-      Expanded(child:SingleChildScrollView(scrollDirection:Axis.horizontal,child:Row(children:[
-        nav('Marcador',Icons.scoreboard,()=>{},compact,selected:true),
-        nav('Diagnóstico BT',Icons.bluetooth_searching,diagnostics,compact),
-        nav('Voz y Parlante',Icons.volume_up,settings,compact),
-        nav('Historial',Icons.history,showHistory,compact),
-      ]))),
-      const SizedBox(width:8),
-      FilledButton(style:FilledButton.styleFrom(backgroundColor:yellow,foregroundColor:const Color(0xff020617),
-        padding:const EdgeInsets.symmetric(horizontal:12),minimumSize:const Size(0,32)),
-        onPressed:ready?setup:null,child:Text(compact?'Nuevo':'Nuevo Partido',style:const TextStyle(fontWeight:FontWeight.w800))),
-    ]));
-  Widget nav(String label,IconData icon,VoidCallback action,bool compact,{bool selected=false}) => compact
-    ? IconButton(tooltip:label,onPressed:ready?action:null,icon:Icon(icon,size:20,color:selected?yellow:muted))
-    : TextButton(onPressed:ready?action:null,child:Text(label,style:TextStyle(color:selected?yellow:muted,fontSize:12)));
   Widget miniMetric(String label,int value,{Color color=Colors.white}) => Expanded(child:Column(mainAxisSize:MainAxisSize.min,children:[
     Text(label,style:const TextStyle(color:Color(0xff64748b),fontSize:10,letterSpacing:1)),
     Text('$value',style:TextStyle(fontSize:24,fontWeight:FontWeight.w900,color:color)),
@@ -294,8 +279,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,
           colors:i==0?const [Color(0xff0e1626),Color(0xff090e18)]:const [Color(0xff0b1320),Color(0xff070b14)])),
         child:InkWell(key:ValueKey('score-team-$i'),onTap:s.winner==null?()=>add(i):null,
-          child:Padding(padding:EdgeInsets.all(low?10:18),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-            Text('EQUIPO ${i+1} · ${i==0?"1 CLIC":"2 CLICS"}',style:const TextStyle(color:muted,fontSize:10,letterSpacing:1)),
+          child:Padding(padding:EdgeInsets.fromLTRB(low?12:18,48,low?12:18,low?10:18),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+            Text('LADO ${i+1}',style:const TextStyle(color:muted,fontSize:10,letterSpacing:1)),
             Text(config.team(i),maxLines:1,overflow:TextOverflow.ellipsis,
               style:TextStyle(fontSize:low?15:22,fontWeight:FontWeight.w900)),
             SizedBox(height:low?18:30,child:serving?Align(alignment:Alignment.centerLeft,child:Container(
@@ -305,9 +290,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                 style:const TextStyle(fontSize:10,color:Color(0xff6ee7b7),fontWeight:FontWeight.bold)))):null),
             Expanded(child:Center(child:FittedBox(fit:BoxFit.contain,child:AnimatedSwitcher(
               duration:const Duration(milliseconds:180),child:Text(s.pointLabel(i),key:ValueKey(s.pointLabel(i)),
-                style:TextStyle(fontSize:190,height:1,fontWeight:FontWeight.w900,fontFamily:'BarlowCondensed',
+                style:TextStyle(fontSize:260,height:1,fontWeight:FontWeight.w900,fontFamily:'BarlowCondensed',
                   letterSpacing:-6,color:color,shadows:[Shadow(color:color.withValues(alpha:0.23),blurRadius:25)])))))),
-            Center(child:Text(s.table||s.tie?'PUNTOS':'TANTEO',style:const TextStyle(color:muted,fontSize:10,letterSpacing:2))),
             SizedBox(height:low?2:8),const Divider(color:Color(0xff1e293b),height:1),
             Padding(padding:const EdgeInsets.only(top:6),child:Row(children:[
               if(low) ...[
@@ -320,61 +304,85 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
             ])),
           ])))))));
   }
-  Widget toolbar(Score s,bool compact) => IconButtonTheme(data:IconButtonThemeData(style:IconButton.styleFrom(
-    minimumSize:const Size(32,32),padding:const EdgeInsets.all(5),tapTargetSize:MaterialTapTargetSize.shrinkWrap)),child:Container(color:const Color(0xff020617),
-    padding:const EdgeInsets.symmetric(horizontal:12,vertical:3),child:Row(children:[
-      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisSize:MainAxisSize.min,children:[
-        Text('${config.label.toUpperCase()} · ${s.table?"A 11 PUNTOS":config.goldenPoint?"PUNTO DE ORO":"VENTAJAS"}',
-          maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10,fontWeight:FontWeight.bold,color:Color(0xffcbd5e1))),
-        Text('${s.table?"Juego":"Set"} ${s.completed.length+(s.winner==null?1:0)} · ${s.completed.map((v)=>v.join("–")).join("  ")}'
-          '${s.table?"":"  [${s.games.join("–")}]"}',maxLines:1,overflow:TextOverflow.ellipsis,
-          style:const TextStyle(color:Color(0xfffbbf24),fontSize:11)),
-      ])),
-      IconButton(tooltip:'Repetir marcador',onPressed:()=>speak(s.winner==null?'${s.summary} Saca ${config.players[s.server]}.':'${s.summary} Ganador ${config.team(s.winner!)}.'),
-        icon:const Icon(Icons.refresh,size:19,color:yellow)),
-      IconButton(tooltip:'Invertir lados',onPressed:()=>setState(()=>swapped=!swapped),icon:const Icon(Icons.swap_horiz,size:20,color:cyan)),
-      IconButton(tooltip:voice?'Silenciar voz':'Activar voz',onPressed:(){setState(()=>voice=!voice);save();if(!voice)call('stop');},
-        icon:Icon(voice?Icons.volume_up:Icons.volume_off,size:19,color:voice?const Color(0xff34d399):muted)),
-      IconButton(tooltip:'Pantalla completa',onPressed:toggleFullscreen,icon:Icon(fullscreen?Icons.fullscreen_exit:Icons.fullscreen,size:20)),
-    ])));
-  Widget status(Score s) {
-    final text=s.winner!=null?'🏆 GANADOR · ${config.team(s.winner!)}':
-      s.pressure.isNotEmpty?s.pressure:s.changeEnds?'Cambio de lado':
-      'Saca ${config.players[s.server]}${s.table?" · Recibe ${config.players[s.receiver!]}":""}';
-    return Container(width:double.infinity,color:const Color(0xff0f172a),padding:const EdgeInsets.symmetric(horizontal:12,vertical:3),
-      child:Text(text,maxLines:2,overflow:TextOverflow.ellipsis,textAlign:TextAlign.center,
-        style:TextStyle(color:s.winner!=null?yellow:muted,fontSize:12,fontWeight:FontWeight.w600)));
+
+  Future<void> openOptions() async {
+    cancelPending(); overlay=true; await capture();
+    if(!mounted) return;
+    final action=await showDialog<String>(context:context,builder:(ctx)=>AlertDialog(
+      title:Row(children:[const Expanded(child:Text('Menú de opciones')),
+        IconButton(tooltip:'Cerrar menú',onPressed:()=>Navigator.pop(ctx),icon:const Icon(Icons.close))]),
+      content:SizedBox(width:380,child:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
+        option(ctx,'Nuevo partido',Icons.play_arrow,'new',color:yellow),
+        option(ctx,'Deshacer último punto',Icons.undo,'undo',enabled:ledger.isNotEmpty,color:const Color(0xfffbbf24)),
+        option(ctx,'Voz y parlante',Icons.volume_up,'voice'),
+        option(ctx,'Probar control Bluetooth',Icons.bluetooth_searching,'diagnostic'),
+        option(ctx,'Historial de partidos',Icons.history,'history'),
+        option(ctx,'Repetir marcador',Icons.refresh,'repeat'),
+        option(ctx,'Invertir lados',Icons.swap_horiz,'swap'),
+        option(ctx,voice?'Silenciar voz':'Activar voz',voice?Icons.volume_off:Icons.volume_up,'mute'),
+        option(ctx,fullscreen?'Mostrar barras de Android':'Ocultar barras de Android',Icons.fullscreen,'fullscreen'),
+        const SizedBox(height:8),
+        Text('${config.label} · ${remote?"Control activo":"Modo táctil"}\n1 clic = equipo 1 · 2 = equipo 2 · 3 = deshacer',
+          textAlign:TextAlign.center,style:const TextStyle(color:muted,fontSize:11)),
+      ]))),
+    ));
+    await Future<void>.delayed(const Duration(milliseconds:200));
+    if(!mounted) return;
+    switch(action) {
+      case 'new':await setup();break;
+      case 'voice':await settings();break;
+      case 'diagnostic':await diagnostics();break;
+      case 'history':await showHistory();break;
+      case 'undo':undo();break;
+      case 'repeat':
+        final s=score;speak(s.winner==null?'${s.summary} Saca ${config.players[s.server]}.':'${s.summary} Ganador ${config.team(s.winner!)}.');break;
+      case 'swap':setState(()=>swapped=!swapped);break;
+      case 'mute':setState(()=>voice=!voice);save();if(!voice)call('stop');break;
+      case 'fullscreen':await toggleFullscreen();break;
+    }
+    overlay=false;await capture();
   }
-  Widget dock(bool compact) => Container(color:const Color(0xff020617),padding:const EdgeInsets.symmetric(horizontal:12,vertical:4),
-    child:Row(children:[
-      OutlinedButton.icon(onPressed:ledger.isEmpty?null:undo,icon:const Icon(Icons.undo,size:17),label:const Text('Deshacer'),
-        style:OutlinedButton.styleFrom(minimumSize:const Size(0,32),tapTargetSize:MaterialTapTargetSize.shrinkWrap,padding:const EdgeInsets.symmetric(horizontal:12),foregroundColor:const Color(0xfffcd34d),side:const BorderSide(color:Color(0xff78550d)))),
-      if(!compact) Expanded(child:Padding(padding:const EdgeInsets.only(left:16),child:Text(remote?'● CONTROL ACTIVO · 1 clic = J1 · 2 clics = J2 · 3 = deshacer':'○ MODO TÁCTIL · activa el control en Diagnóstico BT',
-        maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11,color:muted)))),
-      if(compact) const Spacer(),
-      TextButton(style:TextButton.styleFrom(minimumSize:const Size(0,32),tapTargetSize:MaterialTapTargetSize.shrinkWrap),onPressed:diagnostics,child:Text(compact?'Probar BT':'Probar Control',style:const TextStyle(color:muted,fontSize:12))),
-    ]));
+  Widget option(BuildContext context,String text,IconData icon,String value,{bool enabled=true,Color color=muted}) => ListTile(
+    dense:true,enabled:enabled,leading:Icon(icon,color:enabled?color:const Color(0xff475569),size:21),
+    title:Text(text,style:const TextStyle(fontSize:13,fontWeight:FontWeight.w600)),
+    trailing:const Icon(Icons.chevron_right,size:16),onTap:enabled?()=>Navigator.pop(context,value):null);
+  Widget matchBadge(Score s) => Container(padding:const EdgeInsets.symmetric(horizontal:12,vertical:5),
+    decoration:BoxDecoration(color:const Color(0xee020617),borderRadius:BorderRadius.circular(22),
+      border:Border.all(color:const Color(0xff334155))),
+    child:Text.rich(TextSpan(children:[
+      TextSpan(text:s.table?'JUEGOS  ':'SETS  ',style:const TextStyle(color:muted,fontSize:10)),
+      TextSpan(text:'${s.sets[0]}',style:const TextStyle(color:yellow)),
+      const TextSpan(text:' – ',style:TextStyle(color:muted)),
+      TextSpan(text:'${s.sets[1]}',style:const TextStyle(color:cyan)),
+      if(!s.table && !s.tie && config.goldenPoint && s.points[0]>=3 && s.points[0]==s.points[1])
+        const TextSpan(text:' · ORO',style:TextStyle(color:Color(0xfffbbf24),fontSize:9)),
+      if(s.tie) const TextSpan(text:' · TIE-BREAK',style:TextStyle(color:Color(0xfffbbf24),fontSize:9)),
+    ]),style:const TextStyle(fontSize:14,fontWeight:FontWeight.w900)));
   @override Widget build(BuildContext context) {
     final s=score;
     return RepaintBoundary(key:const ValueKey('court-surface'),child:Scaffold(body:SafeArea(child:LayoutBuilder(builder:(ctx,size){
-      final compact=size.maxWidth<700, low=size.maxHeight<500;
-      return Column(children:[
-        if(!fullscreen) header(compact),
-        if(error!=null) Container(color:const Color(0xff7f1d1d),padding:const EdgeInsets.only(left:12),child:Row(children:[
-          Expanded(child:Text(error!,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11))),
-          IconButton(tooltip:'Cerrar aviso',onPressed:()=>setState(()=>error=null),icon:const Icon(Icons.close,size:16)),
-        ])),
-        if(!ready) const Expanded(child:Center(child:CircularProgressIndicator()))
-        else ...[
-          toolbar(s,compact),
+      final low=size.maxHeight<500;
+      return Stack(children:[
+        if(!ready) const Center(child:CircularProgressIndicator())
+        else Positioned.fill(child:Column(children:[
+          if(error!=null) Container(color:const Color(0xff7f1d1d),padding:const EdgeInsets.only(left:12),child:Row(children:[
+            Expanded(child:Text(error!,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11))),
+            IconButton(tooltip:'Cerrar aviso',onPressed:()=>setState(()=>error=null),icon:const Icon(Icons.close,size:16)),
+          ])),
           Expanded(child:Row(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
             panel(swapped?1:0,s,low),
             Container(width:5,color:const Color(0xff334155),child:const Center(child:RotatedBox(quarterTurns:1,
               child:Text('VS',style:TextStyle(fontSize:8,color:Color(0xff94a3b8)))))),
             panel(swapped?0:1,s,low),
           ])),
-          status(s),dock(compact),
-        ],
+          if(s.winner!=null) Container(width:double.infinity,color:const Color(0xff0f172a),padding:const EdgeInsets.all(8),
+            child:Text('GANADOR · ${config.team(s.winner!)}',textAlign:TextAlign.center,
+              style:const TextStyle(color:yellow,fontSize:17,fontWeight:FontWeight.w900))),
+        ])),
+        if(ready && error==null) Positioned(top:8,left:48,right:48,child:Center(child:matchBadge(s))),
+        Positioned(top:4,right:4,child:IconButton(tooltip:'Menú de opciones',onPressed:ready?openOptions:null,
+          style:IconButton.styleFrom(backgroundColor:const Color(0x991e293b)),
+          icon:const Icon(Icons.settings_outlined,color:Color(0xff94a3b8),size:21))),
       ]);
     }))));
   }

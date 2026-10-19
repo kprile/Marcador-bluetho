@@ -1,16 +1,19 @@
-# SCOREBT · Android v2
+# SCOREBT · Android v3
 
-Implementación Flutter nativa de la interfaz del proyecto React de AI Studio.
-Referencia: `kprile/Marcador-Deportivo-iaestudio`, commit
-`43f10e68e5350f74858acda61d0d64747c1075b7`.
+Referencia visual: rama v.3 de kprile/Marcador-Deportivo-iaestudio,
+commit fdc8121f6f0dbe80f6ca00542682737f5eec119a.
 
-## Versiones
+## Cambios v3
 
-- `v.1`: primer APK compilado, sin modificaciones funcionales posteriores.
-- `main`: se mantiene en esa primera versión.
-- `v.2`: implementación corregida y diseño SCOREBT.
-- La v2 usa identificador `cl.marcador.bluetooth` y nombre **Cancha v2**: se puede
-  instalar junto a la v1, sin borrar su información. No importa datos de la v1.
+- Marcador limpio a pantalla completa, tanteos más grandes y menú flotante.
+- Se conserva el motor corregido y probado de la v2, el historial y el control HID.
+- Se respeta la voz elegida manualmente. Si desaparece, se avisa en lugar de
+  reemplazarla silenciosamente. Se puede elegir Automática explícitamente.
+- El APK solo ofrece voces españolas instaladas offline. Yolanda Online de un
+  navegador no se descarga ni se distribuye como una voz nativa Android.
+- Nombre SCOREBT v3, identificador cl.marcador.bluetooth.v3: puede instalarse
+  junto a v1 y v2 y guarda sus datos por separado.
+- No se modifica la rama main ni las ramas v.1 y v.2.
 
 ## Por qué el primer APK no coincidía con AI Studio
 
@@ -18,7 +21,7 @@ AI Studio ejecuta el proyecto React/TypeScript en `src/components`. Su pantalla
 “Proyecto Flutter” genera textos Dart desde `src/data/flutterProjectFiles.ts`.
 Esos textos contienen una aplicación simplificada y no reproducen la aplicación
 React. El primer repositorio Android contenía precisamente esa exportación.
-La v2 implementa directamente la interfaz de referencia en Flutter y utiliza
+La app Android implementa directamente la interfaz de referencia en Flutter y utiliza
 Android para captura HID, almacenamiento y síntesis de voz.
 
 ## Cambios
@@ -65,8 +68,8 @@ versión lista para Play Store. Para una distribución estable se debe configura
 un almacén de claves propio. Los APK de ejecuciones distintas pueden requerir
 desinstalar el anterior si cambia la clave de desarrollo; eso borra sus datos.
 
-GitHub Actions compila la rama `v.2` y entrega **Cancha-v2-Android**. También
-publica imágenes de pruebas de interfaz en **Cancha-v2-vistas**.
+GitHub Actions compila la rama `v.3` y entrega **Cancha-v3-Android**. También
+publica imágenes de pruebas de interfaz en **Cancha-v3-vistas**.
 No hay llamadas a modelos de IA, servidores ni necesidad de claves de API.
 
 ## Prueba en cancha

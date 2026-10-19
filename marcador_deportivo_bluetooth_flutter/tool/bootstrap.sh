@@ -13,10 +13,10 @@ cp "$staging/MainActivity.kt" android/app/src/main/kotlin/cl/marcador/bluetooth/
 python3 - <<'PY'
 from pathlib import Path
 p=Path('android/app/build.gradle.kts')
-s=p.read_text().replace('cl.marcador.marcador_bluetooth','cl.marcador.bluetooth')
+s=p.read_text().replace('cl.marcador.marcador_bluetooth','cl.marcador.bluetooth.v3')
 p.write_text(s)
 m=Path('android/app/src/main/AndroidManifest.xml')
-s=m.read_text().replace('android:label="marcador_bluetooth"','android:label="Cancha v2"')
+s=m.read_text().replace('android:label="marcador_bluetooth"','android:label="SCOREBT v3"')
 s=s.replace('</manifest>', '<queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries></manifest>')
 m.write_text(s)
 PY
